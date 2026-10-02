@@ -1,0 +1,134 @@
+---
+import Base from '../layouts/Base.astro';
+import { KEY_SPECS, PRODUCT, formatGBP } from '../config/product.js';
+
+const images = [
+  { file: 'vela-obsidian-side', title: 'Vela in Obsidian, side view' },
+  { file: 'vela-bone-three-quarter', title: 'Vela in Bone, three-quarter view' },
+  { file: 'vela-tidewater-rear', title: 'Vela in Tidewater, rear three-quarter view' },
+];
+---
+
+<Base title="Vela press kit" description="Launch facts, key specifications and high-resolution images of the Vela e-bike for press use." current="press">
+  <main id="main" class="page press">
+    <div class="container">
+      <h1 class="page-title">Press kit</h1>
+      <p class="page-intro">The launch facts and images, free to use in coverage of Vela. For interviews and review bikes, email <a href="mailto:press@vela.example">press@vela.example</a>.</p>
+
+      <section class="press__facts" aria-labelledby="facts-title">
+        <h2 id="facts-title" class="section-title">Fact sheet</h2>
+        <div class="facts-grid">
+          <div class="story">
+            <p>Vela is a premium e-bike designed for the 10 km urban commute. Its battery sits inside the down tube, the lights are wired through the frame, and a carbon belt replaces the chain, so there is nothing to oil and very little to service.</p>
+            <p>It weighs 16.8 kg, has up to 120 km of range and assists to the UK legal limit of 25 km/h. Vela launches in three colours, Obsidian, Bone and Tidewater, from {formatGBP(PRODUCT.price)}. Free test rides are available at partner shops across the UK.</p>
+          </div>
+          <dl class="facts">
+            {KEY_SPECS.map((s) => (
+              <div>
+                <dt class="label">{s.label}</dt>
+                <dd><span class="tabular">{s.value}</span> {s.unit}</dd>
+              </div>
+            ))}
+            <div>
+              <dt class="label">Price</dt>
+              <dd class="tabular">From {formatGBP(PRODUCT.price)}</dd>
+            </div>
+          </dl>
+        </div>
+        <p><a href="/specs">Full specifications and geometry</a></p>
+      </section>
+
+      <section aria-labelledby="images-title">
+        <h2 id="images-title" class="section-title">Images</h2>
+        <ul class="images">
+          {images.map((img, i) => (
+            <li class:list={{ wide: i === 0 }}>
+              <img src={`/media/press/${img.file}-thumb.webp`} alt={img.title} width="1600" height="900" loading="lazy" decoding="async" />
+              <div class="images__meta">
+                <span>{img.title}</span>
+                <a href={`/media/press/${img.file}.jpg`} download>Download JPG, 2400 px<span class="sr-only">: {img.title}</span></a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .press__facts {
+    margin-top: clamp(56px, 8vw, 104px);
+  }
+  .section-title {
+    font-size: clamp(28px, 2vw + 16px, 44px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0 0 28px;
+  }
+  .facts-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(32px, 5vw, 80px);
+  }
+  .story p {
+    margin: 0 0 18px;
+    font-size: 19px;
+    line-height: 1.6;
+    max-width: 62ch;
+    color: rgb(241 237 230 / 0.88);
+  }
+  .facts {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-content: start;
+  }
+  .facts dd {
+    margin: 6px 0 0;
+    font-size: 28px;
+    font-weight: 500;
+  }
+  .press section + section {
+    margin-top: clamp(56px, 8vw, 104px);
+  }
+  .press a {
+    text-underline-offset: 5px;
+    text-decoration-color: var(--copper);
+  }
+  .images {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .images .wide {
+    grid-column: 1 / -1;
+  }
+  .images img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    background: var(--dusk);
+  }
+  .images__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-top: 12px;
+    font-size: 15px;
+  }
+  .images__meta span {
+    color: #a9a6ae;
+  }
+  @media (max-width: 767px) {
+    .facts-grid,
+    .images {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

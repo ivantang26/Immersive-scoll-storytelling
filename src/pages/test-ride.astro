@@ -1,0 +1,372 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Book a Vela test ride" description="Find your nearest Vela partner shop and book a free 30-minute test ride." current="test-ride">
+  <main id="main" class="page booking">
+    <div class="container booking__grid">
+      <header class="booking__head">
+        <h1 class="page-title">Book a test ride</h1>
+        <p class="page-intro">Free, 30 minutes, at a partner shop near you. A mechanic sets the bike up for your height before you ride.</p>
+        <p class="booking__bike" data-bike hidden></p>
+      </header>
+
+      <noscript>
+        <p class="booking__noscript">Booking needs JavaScript. You can also book by emailing <a href="mailto:rides@vela.example">rides@vela.example</a> with your postcode and a preferred date.</p>
+      </noscript>
+
+      <form class="booking__form" data-booking novalidate>
+        <div class="error-summary" data-summary tabindex="-1" hidden>
+          <h2>There is a problem</h2>
+          <ul data-summary-list></ul>
+        </div>
+
+        <!-- Step 1 -->
+        <section class="step" data-step="1" aria-labelledby="s1">
+          <h2 class="step__title" id="s1" tabindex="-1"><span class="step__n" aria-hidden="true">1</span>Find a shop</h2>
+          <div class="field">
+            <label for="postcode">Your postcode</label>
+            <p class="hint" id="postcode-hint">We'll show the three nearest partner shops.</p>
+            <div class="inline">
+              <input class="input" id="postcode" name="postcode" autocomplete="postal-code" inputmode="text" autocapitalize="characters" spellcheck="false" aria-describedby="postcode-hint postcode-error" />
+              <button class="btn" type="button" data-find>Find shops</button>
+            </div>
+            <p class="error" id="postcode-error" data-error="postcode"></p>
+          </div>
+          <div class="shops" data-shops aria-live="polite"></div>
+        </section>
+
+        <!-- Step 2 -->
+        <section class="step" data-step="2" aria-labelledby="s2">
+          <h2 class="step__title" id="s2" tabindex="-1"><span class="step__n" aria-hidden="true">2</span>Pick a time</h2>
+          <fieldset class="step__body" data-when disabled>
+            <legend class="sr-only">Date and time</legend>
+            <div class="field">
+              <span class="field-label" id="date-label">Date</span>
+              <div class="chips chips--dates" data-dates role="radiogroup" aria-labelledby="date-label"></div>
+              <p class="error" data-error="date"></p>
+            </div>
+            <div class="field">
+              <span class="field-label" id="time-label">Time</span>
+              <div class="chips chips--times" data-times role="radiogroup" aria-labelledby="time-label" aria-live="polite">
+                <p class="hint">Choose a date to see times.</p>
+              </div>
+              <p class="error" data-error="time"></p>
+            </div>
+          </fieldset>
+        </section>
+
+        <!-- Step 3 -->
+        <section class="step" data-step="3" aria-labelledby="s3">
+          <h2 class="step__title" id="s3" tabindex="-1"><span class="step__n" aria-hidden="true">3</span>Your details</h2>
+          <fieldset class="step__body" data-details disabled>
+            <legend class="sr-only">Contact details</legend>
+            <div class="field">
+              <label for="name">Full name</label>
+              <input class="input" id="name" name="name" autocomplete="name" aria-describedby="name-error" />
+              <p class="error" id="name-error" data-error="name"></p>
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <p class="hint" id="email-hint">We'll send your confirmation and a calendar invite here.</p>
+              <input class="input" id="email" name="email" type="email" autocomplete="email" aria-describedby="email-hint email-error" />
+              <p class="error" id="email-error" data-error="email"></p>
+            </div>
+            <div class="field">
+              <label for="phone">Mobile number</label>
+              <p class="hint" id="phone-hint">Only used by the shop if they need to move your ride.</p>
+              <input class="input" id="phone" name="phone" type="tel" autocomplete="tel" aria-describedby="phone-hint phone-error" />
+              <p class="error" id="phone-error" data-error="phone"></p>
+            </div>
+            <div class="hp" aria-hidden="true">
+              <label for="company">Company</label>
+              <input id="company" name="company" tabindex="-1" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label class="check">
+                <input type="checkbox" name="consent" aria-describedby="consent-error" />
+                <span>I agree to Vela and the partner shop contacting me about this test ride.</span>
+              </label>
+              <p class="error" id="consent-error" data-error="consent"></p>
+            </div>
+            <button class="btn btn--primary" type="submit" data-submit>Confirm test ride</button>
+          </fieldset>
+        </section>
+      </form>
+
+      <section class="done" data-done hidden aria-labelledby="done-title">
+        <h2 class="page-title" id="done-title" tabindex="-1">You're booked in.</h2>
+        <p class="page-intro" data-done-email></p>
+        <dl class="done__list">
+          <div><dt class="label">Reference</dt><dd class="done__ref" data-done-ref></dd></div>
+          <div><dt class="label">When</dt><dd data-done-when></dd></div>
+          <div><dt class="label">Where</dt><dd data-done-where></dd></div>
+          <div><dt class="label">Bike</dt><dd data-done-bike></dd></div>
+        </dl>
+        <div class="done__actions">
+          <a class="btn" href="/specs">Read the specs</a>
+          <a class="btn" href="/">Back to the story</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    import { initBooking } from '../scripts/booking.js';
+    initBooking();
+  </script>
+</Base>
+
+<style>
+  .booking__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(32px, 6vw, 96px);
+    align-items: start;
+  }
+  .booking__head {
+    position: sticky;
+    top: calc(var(--header-h) + 32px);
+  }
+  .booking__bike {
+    margin: 28px 0 0;
+    padding: 14px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    color: rgb(241 237 230 / 0.85);
+  }
+  .booking__form {
+    display: grid;
+    gap: 16px;
+  }
+  .step {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: clamp(20px, 3vw, 32px);
+    background: var(--surface);
+  }
+  .step__title {
+    margin: 0 0 20px;
+    font-size: 22px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .step__n {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font: 13px var(--font-mono);
+    border: 1px solid var(--copper);
+    color: var(--copper);
+  }
+  :global(.step__body) {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 22px;
+  }
+  :global(.step__body[disabled]) {
+    opacity: 0.45;
+  }
+  .field-label {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .inline {
+    display: flex;
+    gap: 10px;
+  }
+  .inline .input {
+    max-width: 220px;
+    text-transform: uppercase;
+  }
+  .shops {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .shops:empty {
+    display: none;
+  }
+  :global(.shop) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: start;
+    padding: 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  :global(.shop:has(input:checked)) {
+    border-color: var(--copper);
+    background: rgb(208 138 78 / 0.08);
+  }
+  :global(.shop input) {
+    margin: 4px 0 0;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--copper);
+  }
+  :global(.shop__name) {
+    font-weight: 500;
+  }
+  :global(.shop__addr) {
+    display: block;
+    font-size: 14px;
+    color: #a9a6ae;
+  }
+  :global(.shop__dist) {
+    font: 13px var(--font-mono);
+    color: var(--mute);
+    white-space: nowrap;
+  }
+  :global(.chips) {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  :global(.chips--dates) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scroll-snap-type: x proximity;
+  }
+  :global(.chip) {
+    flex: none;
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--bone);
+    font: 15px var(--font-display);
+    cursor: pointer;
+    scroll-snap-align: start;
+  }
+  :global(.chip--date) {
+    display: grid;
+    justify-items: center;
+    line-height: 1.15;
+    border-radius: var(--radius);
+    padding: 8px 12px;
+  }
+  :global(.chip--date small) {
+    font: 11px var(--font-mono);
+    color: var(--mute);
+  }
+  :global(.chip[aria-checked='true']) {
+    border-color: var(--copper);
+    background: var(--copper);
+    color: var(--night);
+  }
+  :global(.chip[aria-checked='true'] small) {
+    color: var(--night);
+  }
+  :global(.chip:disabled) {
+    opacity: 0.35;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+  .check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: start;
+    font-weight: 400 !important;
+    cursor: pointer;
+  }
+  .check input {
+    width: 20px;
+    height: 20px;
+    margin: 2px 0 0;
+    accent-color: var(--copper);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  .error-summary {
+    border: 2px solid var(--danger);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .error-summary h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+  .error-summary ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .error-summary a {
+    color: var(--danger);
+  }
+  .error:empty {
+    display: none;
+  }
+  .done {
+    grid-column: 2;
+  }
+  .done__list {
+    margin: 36px 0 0;
+    display: grid;
+    gap: 18px;
+    border-top: 1px solid var(--line-strong);
+    padding-top: 20px;
+  }
+  .done__list dd {
+    margin: 4px 0 0;
+    font-size: 18px;
+  }
+  .done__ref {
+    font-family: var(--font-mono);
+    color: var(--copper);
+  }
+  .done__actions {
+    margin-top: 36px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .booking__noscript {
+    grid-column: 2;
+  }
+  :global(.skeleton) {
+    height: 74px;
+    border-radius: var(--radius);
+    background: linear-gradient(90deg, #17171d 0%, #202027 50%, #17171d 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+  }
+  @keyframes shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @media (max-width: 900px) {
+    .booking__grid {
+      grid-template-columns: 1fr;
+    }
+    .booking__head {
+      position: static;
+    }
+    .done,
+    .booking__noscript {
+      grid-column: 1;
+    }
+  }
+  @media (max-width: 420px) {
+    .inline {
+      flex-direction: column;
+    }
+    .inline .input {
+      max-width: none;
+    }
+  }
+</style>

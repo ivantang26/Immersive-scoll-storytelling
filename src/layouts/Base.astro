@@ -1,0 +1,118 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  current?: 'story' | 'specs' | 'configure' | 'test-ride' | 'press';
+  solidHeader?: boolean;
+  skipToSpecs?: boolean;
+}
+const { title, description, current, solidHeader = true, skipToSpecs = false } = Astro.props;
+const nav = [
+  { href: '/', label: 'Story', id: 'story' },
+  { href: '/specs', label: 'Specs', id: 'specs' },
+  { href: '/configure', label: 'Configure', id: 'configure' },
+  { href: '/press', label: 'Press', id: 'press' },
+];
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en-GB" data-mode="static">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0B0C0F" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL('/og.jpg', Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!--
+      FR-6 mode switch. Runs before first paint so the static fallback never downloads scrub assets.
+      Static when: reduced motion, Save-Data, device memory under 4 GB, a saved preference, or ?mode=static.
+      Markup defaults to static so the page is complete without JavaScript.
+    -->
+    <script is:inline>
+      (function () {
+        var d = document.documentElement;
+        var reasons = [];
+        try {
+          if (matchMedia('(prefers-reduced-motion: reduce)').matches) reasons.push('reduced-motion');
+          var c = navigator.connection;
+          if (c && c.saveData) reasons.push('save-data');
+          if (navigator.deviceMemory && navigator.deviceMemory < 4) reasons.push('low-memory');
+          var q = new URLSearchParams(location.search).get('mode');
+          var saved = null;
+          try { saved = localStorage.getItem('vela-mode'); } catch (e) {}
+          var mode = reasons.length ? 'static' : 'motion';
+          if (saved === 'static' || saved === 'motion') { mode = saved; reasons.push('preference'); }
+          if (q === 'static' || q === 'motion') { mode = q; reasons.push('query'); }
+          d.dataset.mode = mode;
+          d.dataset.modeReason = reasons.join(' ') || 'default';
+        } catch (e) {
+          d.dataset.mode = 'static';
+        }
+        d.classList.add('js');
+      })();
+    </script>
+    <slot name="head" />
+  </head>
+  <body>
+    <header class:list={['site-header', { 'site-header--solid': solidHeader }]}>
+      {skipToSpecs ? (
+        <a class="skip-specs" href="/specs" data-track="skip_to_specs">Skip to specs</a>
+      ) : (
+        <a class="skip-content btn btn--small" href="#main">Skip to content</a>
+      )}
+      <a class="wordmark" href="/" aria-label="Vela, home">VELA<i aria-hidden="true"></i></a>
+      <button class="menu-toggle btn btn--small" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        {nav.map((n) => (
+          <a href={n.href} aria-current={current === n.id ? 'page' : undefined}>{n.label}</a>
+        ))}
+        <a class="btn btn--primary btn--small" href="/test-ride" aria-current={current === 'test-ride' ? 'page' : undefined}>Book a test ride</a>
+      </nav>
+    </header>
+
+    <slot />
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="site-footer__grid">
+          <div>
+            <a class="wordmark" href="/">VELA<i aria-hidden="true"></i></a>
+            <p>A premium e-bike for the 10 km commute. From £3,400, with free test rides at partner shops across the UK.</p>
+          </div>
+          <nav aria-label="Footer: explore">
+            <ul>
+              <li><a href="/">Story</a></li>
+              <li><a href="/specs">Specs</a></li>
+              <li><a href="/configure">Configure</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="Footer: contact">
+            <ul>
+              <li><a href="/test-ride">Book a test ride</a></li>
+              <li><a href="/press">Press kit</a></li>
+              <li><a href="mailto:hello@vela.example">hello@vela.example</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="site-footer__base">
+          <span class="label">Concept site. Vela is a fictional product.</span>
+          <button class="motion-toggle" type="button" data-motion-toggle>Motion: on</button>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      import { initChrome } from '../scripts/chrome.js';
+      initChrome();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,211 @@
+---
+import Base from '../layouts/Base.astro';
+import { SCENES, PRICE_FROM } from '../config/scenes.js';
+import { formatGBP } from '../config/product.js';
+import '../styles/story.css';
+
+// Default marker positions (used before JS lays out, and in static mode).
+const total = SCENES.reduce((s, c) => s + c.height, 0) - 100;
+let acc = 0;
+const markers = SCENES.map((s) => {
+  const at = Math.min(100, (acc / total) * 100);
+  acc += s.height;
+  return { id: s.id, name: s.name, at };
+});
+const byId = Object.fromEntries(SCENES.map((s) => [s.id, s]));
+const { assembly, turntable, city, specs, colourways } = byId;
+
+const still = (name: string) => ({
+  avif: `/media/stills/${name}-1600.avif`,
+  webp1600: `/media/stills/${name}-1600.webp`,
+  webp1080: `/media/stills/${name}-1080.webp`,
+  webp720: `/media/stills/${name}-720.webp`,
+});
+---
+
+<Base
+  title="Vela | The e-bike for the 10 km commute"
+  description="Meet Vela: a 16.8 kg e-bike with 120 km range, a hidden battery and a carbon belt drive. From £3,400. Book a free test ride."
+  current="story"
+  solidHeader={false}
+  skipToSpecs={true}
+>
+  <nav class="progress" aria-label="Story chapters">
+    <div class="progress__bar" aria-hidden="true"><span class="progress__fill"></span></div>
+    <ol>
+      {markers.map((m) => (
+        <li>
+          <a href={`#${m.id}`} data-jump={m.id} style={`--at:${m.at.toFixed(3)}%`}>
+            <span class="progress__tick" aria-hidden="true"></span>
+            <span class="progress__name">{m.name}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+
+  <main id="main" class="story">
+    <!-- Arrival -->
+    <section class="scene scene--arrival" id="arrival" data-scene="arrival" aria-labelledby="arrival-title">
+      <div class="arrival">
+        <h1 id="arrival-title" class="arrival__mark">VELA<span class="sr-only">: the e-bike for the 10 km commute</span></h1>
+        <p class="arrival__cue label">
+          <span>Scroll to ride</span>
+          <span class="arrival__indicator" aria-hidden="true"><i></i></span>
+        </p>
+      </div>
+    </section>
+
+    <!-- Assembly -->
+    <section class="scene scene--pinned" id="assembly" data-scene="assembly" data-align={assembly.align} style={`--h:${assembly.height}`} aria-labelledby="assembly-title">
+      <div class="stage">
+        <h2 class="sr-only" id="assembly-title">How it goes together</h2>
+        <canvas class="stage__media" aria-hidden="true"></canvas>
+        <picture class="still">
+          <source type="image/avif" srcset={still('assembly').avif} media="(min-width: 1200px)" />
+          <source type="image/webp" srcset={`${still('assembly').webp720} 720w, ${still('assembly').webp1080} 1080w, ${still('assembly').webp1600} 1600w`} sizes="100vw" />
+          <img src={still('assembly').webp1080} alt={assembly.stillAlt} width="1600" height="900" loading="lazy" decoding="async" />
+        </picture>
+        <p class="sr-only motion-only">{assembly.stillAlt}</p>
+        <div class="scrim" aria-hidden="true"></div>
+        <div class="beats">
+          {assembly.beats.map((b) => (
+            <article class="beat" data-beat data-start={b.start} data-end={b.end}>
+              <h3 class="headline">{b.title}</h3>
+              <p class="subline">{b.body}</p>
+            </article>
+          ))}
+        </div>
+        <p class="stage__loading label" data-loading aria-hidden="true">Loading frames</p>
+      </div>
+    </section>
+
+    <!-- Turntable -->
+    <section class="scene scene--pinned" id="turntable" data-scene="turntable" data-align={turntable.align} style={`--h:${turntable.height}`} aria-labelledby="turntable-title">
+      <div class="stage">
+        <h2 class="sr-only" id="turntable-title">What's hidden in the frame</h2>
+        <canvas class="stage__media" aria-hidden="true"></canvas>
+        <picture class="still">
+          <source type="image/avif" srcset={still('turntable').avif} media="(min-width: 1200px)" />
+          <source type="image/webp" srcset={`${still('turntable').webp720} 720w, ${still('turntable').webp1080} 1080w, ${still('turntable').webp1600} 1600w`} sizes="100vw" />
+          <img src={still('turntable').webp1080} alt={turntable.stillAlt} width="1600" height="900" loading="lazy" decoding="async" />
+        </picture>
+        <svg class="callout-lines" aria-hidden="true" preserveAspectRatio="none">
+          {turntable.callouts.map((c) => (
+            <>
+              <line data-line={c.id} opacity="0" />
+              <circle data-dot={c.id} r="5" opacity="0" />
+            </>
+          ))}
+        </svg>
+        <div class="scrim" aria-hidden="true"></div>
+        <ul class="beats callouts">
+          {turntable.callouts.map((c) => (
+            <li class="beat callout" data-beat data-callout={c.id} data-start={c.start} data-end={c.end}>
+              <h3 class="callout__title">{c.title}</h3>
+              <p class="callout__body">{c.body}</p>
+            </li>
+          ))}
+        </ul>
+        <p class="stage__loading label" data-loading aria-hidden="true">Loading frames</p>
+      </div>
+    </section>
+
+    <!-- City ride -->
+    <section class="scene scene--pinned" id="city" data-scene="city" data-align={city.align} style={`--h:${city.height}`} aria-labelledby="city-title">
+      <div class="stage">
+        <h2 class="sr-only" id="city-title">Through the city, day to dusk</h2>
+        <video class="stage__media" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+        <picture class="still">
+          <source type="image/avif" srcset="/media/stills/city-1600.avif" media="(min-width: 1200px)" />
+          <source type="image/webp" srcset="/media/stills/city-720.webp" media="(max-width: 767px)" />
+          <img src="/media/stills/city-1600.webp" alt={city.stillAlt} width="1600" height="900" loading="lazy" decoding="async" />
+        </picture>
+        <p class="sr-only motion-only">{city.stillAlt}</p>
+        <div class="scrim" aria-hidden="true"></div>
+        <div class="beats">
+          {city.beats.map((b) => (
+            <article class="beat beat--stat" data-beat data-start={b.start} data-end={b.end}>
+              <p class="beat__stat tabular">{b.stat}</p>
+              <h3 class="beat__title">{b.title}</h3>
+              <p class="subline">{b.body}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Specs reveal -->
+    <section class="scene scene--pinned scene--specs" id="specs" data-scene="specs" style={`--h:${specs.height}`} aria-labelledby="specs-title">
+      <div class="stage stage--specs">
+        <div class="container">
+          <h2 class="headline specs-title" id="specs-title">The short version.</h2>
+          <dl class="stats">
+            {specs.stats.map((s) => (
+              <div class="stat" data-stat data-value={s.value} data-decimals={s.decimals}>
+                <dt class="label">{s.label}</dt>
+                <dd>
+                  <span class="stat__num tabular" data-num aria-hidden="true">{s.value.toFixed(s.decimals)}</span><span class="stat__unit" aria-hidden="true">{s.unit}</span>
+                  <span class="sr-only">{s.value.toFixed(s.decimals)} {s.unit}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <a class="specs-link" href="/specs">Full specifications</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Colourways -->
+    <section class="scene scene--pinned scene--colourways" id="colourways" data-scene="colourways" style={`--h:${colourways.height}`} aria-labelledby="colourways-title">
+      <div class="stage stage--colourways">
+        <h2 class="headline cw-title" id="colourways-title">Three colours. One copper thread.</h2>
+        <div class="cw-viewport">
+          <ul class="cw-track" role="list">
+            {colourways.items.map((c) => (
+              <li class="cw">
+                <img
+                  src={`/media/colourways/${c.id}-1600.webp`}
+                  srcset={`/media/colourways/${c.id}-800.webp 800w, /media/colourways/${c.id}-1600.webp 1600w`}
+                  sizes="(max-width: 767px) 86vw, 64vw"
+                  alt={`The Vela in ${c.name}.`}
+                  width="1600"
+                  height="1000"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="cw__caption">
+                  <span class="cw__swatch" style={`--swatch:${c.swatch}`} aria-hidden="true"></span>
+                  <h3>{c.name}</h3>
+                  <p>{c.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to action -->
+    <section class="scene scene--cta" id="cta" data-scene="cta" aria-labelledby="cta-title">
+      <picture class="cta__bg" aria-hidden="true">
+        <source type="image/avif" srcset="/media/stills/cta-1600.avif" media="(min-width: 1200px)" />
+        <source type="image/webp" srcset="/media/stills/cta-720.webp 720w, /media/stills/cta-1080.webp 1080w, /media/stills/cta-1600.webp 1600w" sizes="100vw" />
+        <img src="/media/stills/cta-1080.webp" alt="" width="1600" height="900" loading="lazy" decoding="async" />
+      </picture>
+      <div class="cta container">
+        <h2 class="headline" id="cta-title">Ride it before you decide.</h2>
+        <p class="subline">Free 30-minute test rides at partner shops across the UK.</p>
+        <p class="cta__price">From <strong class="tabular">{formatGBP(PRICE_FROM)}</strong></p>
+        <div class="cta__actions">
+          <a class="btn btn--primary" href="/test-ride" data-track="cta_test_ride">Book a test ride</a>
+          <a class="btn" href="/configure" data-track="cta_configure">Configure yours</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    import '../scripts/story.js';
+  </script>
+</Base>

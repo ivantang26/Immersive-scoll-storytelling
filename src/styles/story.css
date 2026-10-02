@@ -1,0 +1,677 @@
+/* Story page. Two modes on <html data-mode>: "motion" (scrubbed scenes) and "static" (FR-6). */
+
+/* ---------------- Progress nav (FR-5) ---------------- */
+.progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: var(--z-progress);
+  height: 18px;
+}
+.progress__bar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: rgb(241 237 230 / 0.1);
+}
+.progress__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--copper);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+html[data-mode='static'] .progress__bar {
+  display: none;
+}
+.progress ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  inset: 0;
+}
+.progress a {
+  position: absolute;
+  top: 0;
+  left: var(--at);
+  display: block;
+  width: 24px;
+  height: 18px;
+  margin-left: -12px;
+  text-decoration: none;
+}
+.progress li:first-child a {
+  margin-left: 0;
+}
+.progress li:last-child a {
+  margin-left: -24px;
+}
+.progress__tick {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 7px;
+  background: rgb(241 237 230 / 0.55);
+}
+.progress a[aria-current='step'] .progress__tick {
+  background: var(--bone);
+  width: 2px;
+}
+.progress__name {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translate(-50%, -4px);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgb(11 12 15 / 0.92);
+  border: 1px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  color: var(--bone);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out);
+}
+.progress li:first-child .progress__name {
+  left: 0;
+  transform: translate(8px, -4px);
+}
+.progress li:last-child .progress__name {
+  left: auto;
+  right: 0;
+  transform: translate(-8px, -4px);
+}
+@media (hover: hover) {
+  .progress:hover .progress__name {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .progress:hover li:first-child .progress__name {
+    transform: translate(8px, 0);
+  }
+  .progress:hover li:last-child .progress__name {
+    transform: translate(-8px, 0);
+  }
+  .progress a:hover .progress__name {
+    border-color: var(--copper);
+  }
+}
+.progress a:focus-visible {
+  outline-offset: -2px;
+}
+.progress a:focus-visible .progress__name {
+  opacity: 1;
+  border-color: var(--copper);
+}
+/* Long-press on touch: open as a tappable list. */
+.progress.is-open ol {
+  inset: 3px 0 auto auto;
+  width: min(280px, 80vw);
+  padding: 8px;
+  background: rgb(11 12 15 / 0.96);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  margin: 8px var(--gutter) 0 0;
+  display: grid;
+}
+.progress.is-open a {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 12px;
+}
+.progress.is-open .progress__tick {
+  display: none;
+}
+.progress.is-open .progress__name {
+  position: static;
+  opacity: 1;
+  transform: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 15px;
+}
+.progress.is-open a[aria-current='step'] .progress__name {
+  color: var(--copper);
+}
+
+/* ---------------- Scenes: shared ---------------- */
+.scene {
+  position: relative;
+}
+.stage {
+  position: relative;
+  overflow: hidden;
+}
+.stage__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Canvas too: during an orientation change the old backing store is cropped, never stretched. */
+canvas.stage__media,
+video.stage__media {
+  object-fit: cover;
+  background: var(--night);
+}
+.stage__loading {
+  position: absolute;
+  left: var(--gutter);
+  bottom: 24px;
+  margin: 0;
+}
+.beat .headline {
+  font-size: clamp(36px, 5.2vw + 10px, 120px);
+}
+
+/* ---------------- Motion mode ---------------- */
+html[data-mode='motion'] .scene--pinned {
+  height: calc(var(--h) * 1vh);
+}
+html[data-mode='motion'] .stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100lvh;
+}
+html[data-mode='motion'] .still {
+  display: none;
+}
+html[data-mode='motion'] .callout-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+.callout-lines line {
+  stroke: var(--copper);
+  stroke-width: 1.25;
+}
+.callout-lines circle {
+  fill: var(--night);
+  stroke: var(--copper);
+  stroke-width: 2;
+}
+html[data-mode='motion'] .scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(11 12 15 / 0.82) 0%, rgb(11 12 15 / 0.45) 32%, rgb(11 12 15 / 0) 55%);
+}
+html[data-mode='motion'] [data-align='right'] .scrim {
+  background: linear-gradient(270deg, rgb(11 12 15 / 0.82) 0%, rgb(11 12 15 / 0.45) 32%, rgb(11 12 15 / 0) 55%);
+}
+html[data-mode='motion'] .beats {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding: var(--header-h) var(--gutter) 0;
+  margin: 0;
+  list-style: none;
+  pointer-events: none;
+}
+html[data-mode='motion'] [data-align='right'] .beats {
+  justify-items: end;
+}
+html[data-mode='motion'] .beat {
+  grid-area: 1 / 1;
+  width: min(44vw, 760px);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+html[data-mode='motion'] .beat .subline {
+  margin-top: 20px;
+}
+
+/* Tablet: text in the left third. */
+@media (min-width: 768px) and (max-width: 1199px) {
+  html[data-mode='motion'] .scrim,
+  html[data-mode='motion'] [data-align='right'] .scrim {
+    background: linear-gradient(90deg, rgb(11 12 15 / 0.85) 0%, rgb(11 12 15 / 0.4) 38%, rgb(11 12 15 / 0) 60%);
+  }
+  html[data-mode='motion'] [data-align='right'] .beats {
+    justify-items: start;
+  }
+  html[data-mode='motion'] .beat {
+    width: min(46vw, 520px);
+  }
+}
+
+/* Mobile: text in the bottom third over a gradient scrim. */
+@media (max-width: 767px) {
+  html[data-mode='motion'] .scrim,
+  html[data-mode='motion'] [data-align='right'] .scrim {
+    background: linear-gradient(0deg, rgb(11 12 15 / 0.96) 0%, rgb(11 12 15 / 0.82) 26%, rgb(11 12 15 / 0) 46%);
+  }
+  html[data-mode='motion'] .beats,
+  html[data-mode='motion'] [data-align='right'] .beats {
+    align-content: end;
+    justify-items: stretch;
+    /* Keep beats above the iOS toolbar when the large viewport is in use. */
+    padding-bottom: calc(28px + env(safe-area-inset-bottom) + (100lvh - 100svh));
+  }
+  html[data-mode='motion'] .beat {
+    width: 100%;
+  }
+  html[data-mode='motion'] .beat .subline {
+    margin-top: 12px;
+  }
+  .stage__loading {
+    bottom: auto;
+    top: calc(var(--header-h) + 16px);
+  }
+}
+
+/* ---------------- Turntable callouts ---------------- */
+.callout {
+  background: rgb(11 12 15 / 0.72);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  max-width: 340px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.callout__title {
+  margin: 0;
+  font-size: clamp(20px, 1vw + 14px, 28px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.callout__body {
+  margin: 8px 0 0;
+  color: rgb(241 237 230 / 0.78);
+  font-size: 16px;
+}
+html[data-mode='motion'] .callouts .beat {
+  width: min(340px, 30vw);
+}
+@media (max-width: 1199px) {
+  html[data-mode='motion'] .callouts .beat {
+    width: min(360px, 44vw);
+  }
+}
+@media (max-width: 767px) {
+  html[data-mode='motion'] .callouts .beat {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* ---------------- City ride stat beats ---------------- */
+.beat__stat {
+  margin: 0;
+  font-size: var(--fs-spec);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--bone);
+}
+.beat__title {
+  margin: 14px 0 0;
+  font-size: var(--fs-subline);
+  font-weight: 500;
+  color: var(--copper);
+}
+.beat--stat .subline {
+  margin-top: 6px !important;
+}
+html[data-mode='motion'] .beat--stat {
+  width: min(36vw, 560px);
+}
+@media (max-width: 1199px) {
+  html[data-mode='motion'] .beat--stat {
+    width: min(46vw, 520px);
+  }
+}
+@media (max-width: 767px) {
+  html[data-mode='motion'] .beat--stat {
+    width: 100%;
+  }
+}
+
+/* ---------------- Arrival ---------------- */
+.scene--arrival {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+.arrival {
+  min-height: inherit;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 48px;
+  padding: var(--header-h) var(--gutter);
+  text-align: center;
+}
+.arrival__mark {
+  margin: 0;
+  font-size: clamp(64px, 14vw, 220px);
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
+  line-height: 1;
+}
+.arrival__cue {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  color: rgb(241 237 230 / 0.72);
+}
+.arrival__indicator {
+  position: relative;
+  width: 1px;
+  height: 44px;
+  background: rgb(241 237 230 / 0.2);
+  overflow: hidden;
+}
+.arrival__indicator i {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--copper);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-mode='motion'] .arrival__mark {
+    animation: arrive 2.2s var(--ease-out) 0.2s both;
+  }
+  html[data-mode='motion'] .arrival__cue {
+    animation: fade 1s ease 1.6s both;
+  }
+  html[data-mode='motion'] .arrival__indicator i {
+    animation: drip 1.8s cubic-bezier(0.65, 0, 0.35, 1) 2.2s infinite;
+  }
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    letter-spacing: 0.5em;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.32em;
+    filter: blur(0);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes drip {
+  0% {
+    transform: translateY(-14px);
+  }
+  70%,
+  100% {
+    transform: translateY(46px);
+  }
+}
+
+/* ---------------- Specs reveal ---------------- */
+.stage--specs {
+  display: grid;
+  align-items: center;
+  background: radial-gradient(120% 80% at 50% 110%, var(--dusk), var(--night) 60%);
+}
+html[data-mode='static'] .stage--specs {
+  padding: clamp(80px, 12vw, 160px) 0;
+}
+.specs-title {
+  font-size: clamp(36px, 4vw + 12px, 88px);
+}
+.stats {
+  margin: clamp(32px, 5vh, 64px) 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(28px, 4vh, 56px) clamp(24px, 4vw, 64px);
+}
+.stat {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 16px;
+}
+.stat[data-active='true'] {
+  border-top-color: var(--copper);
+}
+.stat dd {
+  margin: 8px 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.18em;
+}
+.stat__num {
+  font-size: var(--fs-spec);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+}
+.stat__unit {
+  font-size: clamp(18px, 1.6vw + 8px, 40px);
+  color: var(--mute);
+}
+.specs-link {
+  display: inline-block;
+  margin-top: clamp(28px, 4vh, 48px);
+  color: var(--bone);
+  text-underline-offset: 6px;
+  text-decoration-color: var(--copper);
+}
+@media (min-width: 768px) and (max-height: 760px) {
+  .stat__num {
+    font-size: clamp(48px, 7vw, 104px);
+  }
+}
+@media (max-width: 767px) {
+  .stats {
+    gap: 28px 16px;
+  }
+}
+
+/* ---------------- Colourways ---------------- */
+.stage--colourways {
+  display: grid;
+  align-content: center;
+  gap: clamp(20px, 3vh, 40px);
+  padding: calc(var(--header-h) + 24px) 0 24px;
+}
+.cw-title {
+  font-size: clamp(32px, 2.6vw + 14px, 72px);
+  padding: 0 var(--gutter);
+  max-width: 18ch;
+}
+.cw-viewport {
+  overflow: hidden;
+}
+.cw-track {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--gutter);
+  display: flex;
+  gap: 4vw;
+  width: max-content;
+  will-change: transform;
+}
+.cw {
+  /* Image height = viewport minus header, title and caption, at 16:10. */
+  width: min(64vw, calc((100svh - 400px) * 1.6));
+  min-width: 360px;
+}
+.cw img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--dusk);
+}
+.cw__caption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 12px;
+  margin-top: 16px;
+}
+.cw__caption h3 {
+  margin: 0;
+  font-size: clamp(20px, 1vw + 14px, 28px);
+  font-weight: 500;
+}
+.cw__caption p {
+  grid-column: 2;
+  margin: 2px 0 0;
+  color: rgb(241 237 230 / 0.72);
+}
+.cw__swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow:
+    0 0 0 1px rgb(241 237 230 / 0.35),
+    inset 0 0 0 3px var(--swatch),
+    inset 0 0 0 4px var(--copper);
+}
+/* Swipe carousel: mobile always, and every tier in static mode. */
+@media (max-width: 767px) {
+  .scene--colourways {
+    height: auto !important;
+  }
+  html[data-mode] .stage--colourways {
+    position: relative;
+    height: auto;
+    padding: 96px 0 72px;
+  }
+  .cw-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cw-viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .cw-track {
+    transform: none !important;
+    gap: 14px;
+  }
+  .cw {
+    width: 84vw;
+    min-width: 0;
+    scroll-snap-align: center;
+  }
+}
+html[data-mode='static'] .cw-viewport {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+html[data-mode='static'] .cw {
+  scroll-snap-align: start;
+  scroll-margin-left: var(--gutter);
+}
+
+/* ---------------- CTA ---------------- */
+.scene--cta {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+}
+.cta__bg {
+  position: absolute;
+  inset: 0;
+}
+.cta__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 50%;
+  opacity: 0.55;
+}
+.scene--cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--night) 8%, rgb(11 12 15 / 0.2) 70%);
+  pointer-events: none;
+}
+.cta {
+  position: relative;
+  z-index: 1;
+  padding-bottom: clamp(56px, 12vh, 140px);
+}
+.cta .subline {
+  margin-top: 20px;
+}
+.cta__price {
+  margin: 28px 0 0;
+  font-size: var(--fs-subline);
+  color: var(--mute);
+}
+.cta__price strong {
+  color: var(--bone);
+  font-weight: 500;
+}
+.cta__actions {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ---------------- Static mode (FR-6): stills + text, same content ---------------- */
+html[data-mode='static'] .stage__media,
+html[data-mode='static'] .stage__loading,
+html[data-mode='static'] .callout-lines,
+html[data-mode='static'] .motion-only {
+  display: none;
+}
+html[data-mode='static'] .scene--pinned .stage:not(.stage--specs):not(.stage--colourways) {
+  padding: clamp(72px, 10vw, 120px) 0 clamp(40px, 6vw, 80px);
+}
+html[data-mode='static'] .still img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+html[data-mode='static'] .beats {
+  width: min(100% - var(--gutter) * 2, 1360px);
+  margin: clamp(24px, 4vw, 48px) auto 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 32px clamp(24px, 4vw, 56px);
+}
+html[data-mode='static'] .beat .headline {
+  font-size: clamp(28px, 2vw + 16px, 48px);
+}
+html[data-mode='static'] .beat .subline {
+  margin-top: 12px;
+}
+html[data-mode='static'] .callout {
+  max-width: none;
+}
+html[data-mode='static'] .beat__stat {
+  font-size: clamp(48px, 4vw + 24px, 96px);
+}
