@@ -11,6 +11,10 @@ npm run dev        # http://localhost:4321
 npm run build && npm run preview   # production: static pages + Node server for /api
 ```
 
+## Vercel deployment
+
+Import the repository with its root directory set to this project and leave Vercel's build and output settings on Automatic. The Vercel build environment selects `@astrojs/vercel`, which packages the static pages and `/api/*` routes in Vercel's deployment format. Local production previews continue to use the standalone Node adapter.
+
 ## Pages
 
 | Route | What it is |
